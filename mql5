@@ -1,0 +1,125 @@
+
+//+------------------------------------------------------------------+
+//|                              XP Sessions                          |
+//|                        forexroboteasy.com                          |
+//|                        Forex Robot Easy Team                       |
+//+------------------------------------------------------------------+
+
+//--- Input parameters
+input bool showLondon = true;       // Show London session
+input bool showNewYork = true;      // Show New York session
+input bool showSydney = true;       // Show Sydney session
+input bool showTokyo = true;        // Show Tokyo session
+input int maxDaysBack = 30;         // Maximum number of days back to get/draw
+
+//--- Global variables
+datetime currentTime;               // Current time
+datetime gmtTime;                   // GMT time
+int shift;                          // Time shift
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   //--- Calculate time shift
+   shift = TimeCurrent() - TimeLocal();
+   
+   //--- Set indicator buffers
+   SetIndexBuffer(0, xpBuffer);
+   
+   //--- Set indicator labels
+   SetIndexLabel(0, 'XP Sessions');
+   
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime &time[],
+                const double &open[],
+                const double &high[],
+                const double &low[],
+                const double &close[],
+                const long &tick_volume[],
+                const long &volume[],
+                const int &spread[])
+{
+   //--- Calculate GMT time for each bar
+   for(int i = 0; i < rates_total; i++)
+   {
+      currentTime = TimeLocal() + (time[i] - TimeCurrent()) + shift;
+      gmtTime = TimeGMT(currentTime);
+      
+      //--- Check if current bar is within the specified number of days back
+      if(i >= rates_total - maxDaysBack)
+      {
+         //--- Draw XP Sessions
+         if(showLondon && IsLondonSession(gmtTime))
+            xpBuffer[i] = 1;
+         else if(showNewYork && IsNewYorkSession(gmtTime))
+            xpBuffer[i] = 2;
+         else if(showSydney && IsSydneySession(gmtTime))
+            xpBuffer[i] = 3;
+         else if(showTokyo && IsTokyoSession(gmtTime))
+            xpBuffer[i] = 4;
+         else
+            xpBuffer[i] = 0;
+      }
+      else
+         xpBuffer[i] = 0;
+   }
+   
+   return(rates_total);
+}
+
+//+------------------------------------------------------------------+
+//| Check if the given time is within the London session              |
+//+------------------------------------------------------------------+
+bool IsLondonSession(datetime time)
+{
+   //--- Check if time is within London session hours
+   if(TimeHour(time) >= 8 && TimeHour(time) < 16)
+      return true;
+   
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check if the given time is within the New York session            |
+//+------------------------------------------------------------------+
+bool IsNewYorkSession(datetime time)
+{
+   //--- Check if time is within New York session hours
+   if(TimeHour(time) >= 12 && TimeHour(time) < 20)
+      return true;
+   
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check if the given time is within the Sydney session              |
+//+------------------------------------------------------------------+
+bool IsSydneySession(datetime time)
+{
+   //--- Check if time is within Sydney session hours
+   if(TimeHour(time) >= 22 && TimeHour(time) < 6)
+      return true;
+   
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Check if the given time is within the Tokyo session               |
+//+------------------------------------------------------------------+
+bool IsTokyoSession(datetime time)
+{
+   //--- Check if time is within Tokyo session hours
+   if(TimeHour(time) >= 0 && TimeHour(time) < 8)
+      return true;
+   
+   return false;
+}
